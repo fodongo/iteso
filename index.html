@@ -1,0 +1,1738 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Aprendizaje y Estrategia Cientométrica para Doctorandos</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js para visualización de datos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SheetJS para soporte de subida de archivos Excel (.xlsx) -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- Google Fonts Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#0284c7',
+                            600: '#0369a1',
+                            700: '#075985',
+                            900: '#0c4a6e',
+                        }
+                    },
+                    keyframes: {
+                        pulseBadge: {
+                            '0%, 100%': { transform: 'scale(1)', opacity: '1' },
+                            '50%': { transform: 'scale(1.15)', opacity: '0.85' }
+                        },
+                        floatSoft: {
+                            '0%, 100%': { transform: 'translateY(0px)' },
+                            '50%': { transform: 'translateY(-4px)' }
+                        }
+                    },
+                    animation: {
+                        'pulse-badge': 'pulseBadge 2s infinite ease-in-out',
+                        'float-soft': 'floatSoft 3s infinite ease-in-out'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Personalización de scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col">
+
+    <!-- Encabezado / Navegación -->
+    <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-sky-500 p-2 rounded-lg text-slate-900 font-bold">
+                        <i class="fa-solid fa-diagram-project text-xl"></i>
+                    </div>
+                    <div>
+                        <span class="font-bold text-lg tracking-tight bg-gradient-to-r from-sky-400 to-indigo-300 bg-clip-text text-transparent">ScientoLab PhD</span>
+                        <span class="text-xs block text-slate-400 font-mono">Motor de Cientometría y Estrategia de Investigación</span>
+                    </div>
+                </div>
+                
+                <!-- Pestañas de Navegación -->
+                <nav class="hidden md:flex space-x-1" id="nav-tabs">
+                    <button onclick="switchTab('concepts')" id="tab-concepts" class="nav-btn active px-4 py-2 rounded-md text-sm font-medium transition-all bg-sky-600 text-white">
+                        <i class="fa-solid fa-graduation-cap mr-2"></i>Conceptos Clave
+                    </button>
+                    <button onclick="switchTab('simulator')" id="tab-simulator" class="nav-btn px-4 py-2 rounded-md text-sm font-medium transition-all text-slate-300 hover:text-white hover:bg-slate-800">
+                        <i class="fa-solid fa-database mr-2"></i>Laboratorio de Datos
+                    </button>
+                    <button onclick="switchTab('analytics')" id="tab-analytics" class="nav-btn px-4 py-2 rounded-md text-sm font-medium transition-all text-slate-300 hover:text-white hover:bg-slate-800">
+                        <i class="fa-solid fa-chart-line mr-2"></i>Analítica del Campo
+                    </button>
+                    <button onclick="switchTab('network')" id="tab-network" class="nav-btn px-4 py-2 rounded-md text-sm font-medium transition-all text-slate-300 hover:text-white hover:bg-slate-800">
+                        <i class="fa-solid fa-circle-nodes mr-2"></i>Mapa de Co-ocurrencia
+                    </button>
+                    <button onclick="switchTab('advisor')" id="tab-advisor" class="nav-btn px-4 py-2 rounded-md text-sm font-medium transition-all text-slate-300 hover:text-white hover:bg-slate-800">
+                        <i class="fa-solid fa-wand-magic-sparkles mr-2 text-sky-400"></i>Asesor Estratégico IA
+                    </button>
+                </nav>
+
+                <!-- Botón Menú Móvil -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-btn" onclick="toggleMobileMenu()" class="p-2 rounded-md text-slate-400 hover:text-white hover:bg-slate-800 focus:outline-none">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Menú Desplegable Móvil -->
+        <div id="mobile-menu" class="hidden md:hidden bg-slate-950 px-2 pt-2 pb-3 space-y-1 border-t border-slate-800">
+            <button onclick="switchTab('concepts')" class="w-full text-left px-3 py-2 rounded-md text-base font-medium text-white hover:bg-slate-800">Conceptos Clave</button>
+            <button onclick="switchTab('simulator')" class="w-full text-left px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:bg-slate-800">Laboratorio de Datos</button>
+            <button onclick="switchTab('analytics')" class="w-full text-left px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:bg-slate-800">Analítica del Campo</button>
+            <button onclick="switchTab('network')" class="w-full text-left px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:bg-slate-800">Mapa de Co-ocurrencia</button>
+            <button onclick="switchTab('advisor')" class="w-full text-left px-3 py-2 rounded-md text-base font-medium text-slate-300 hover:bg-slate-800">Asesor Estratégico IA</button>
+        </div>
+    </header>
+
+    <!-- Contenedor de Notificaciones Toast -->
+    <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col space-y-2 pointer-events-none"></div>
+
+    <!-- Modal Pedagogico Flotante (Concept Explainer) -->
+    <div id="concept-modal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-xl w-full p-6 relative animate-float-soft">
+            <button onclick="closeConceptModal()" class="absolute top-4 right-4 text-slate-400 hover:text-slate-700 w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-sm font-bold transition">
+                &times;
+            </button>
+            <div class="flex items-center space-x-3 mb-3">
+                <div id="modal-icon-bg" class="w-10 h-10 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center text-lg">
+                    <i id="modal-icon" class="fa-solid fa-graduation-cap"></i>
+                </div>
+                <div>
+                    <span class="text-xs uppercase font-bold tracking-wider text-sky-600 block">Explicación Pedagógica PhD</span>
+                    <h3 id="modal-title" class="text-xl font-bold text-slate-900">Concepto Cientométrico</h3>
+                </div>
+            </div>
+            <div class="space-y-4 text-xs sm:text-sm text-slate-600 border-t border-slate-100 pt-3">
+                <div class="bg-sky-50/70 p-3.5 rounded-xl border border-sky-100">
+                    <h4 class="font-bold text-sky-900 mb-1"><i class="fa-solid fa-lightbulb text-amber-500 mr-1.5"></i>¿Qué significa en palabras sencillas?</h4>
+                    <p id="modal-simple-desc">Descripción amigable para tesistas.</p>
+                </div>
+                <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+                    <h4 class="font-bold text-slate-800 mb-1"><i class="fa-solid fa-graduation-cap text-indigo-600 mr-1.5"></i>Ejemplo Real en Tu Tesis Doctoral</h4>
+                    <p id="modal-example">Ejemplo aplicado a tu investigación.</p>
+                </div>
+                <div class="bg-amber-50/70 p-3.5 rounded-xl border border-amber-200">
+                    <h4 class="font-bold text-amber-900 mb-1"><i class="fa-solid fa-circle-exclamation text-amber-600 mr-1.5"></i>Consejo Clave de Tu Revisor</h4>
+                    <p id="modal-tip">Estrategia clave para defender este aspecto en la tesis.</p>
+                </div>
+            </div>
+            <div class="mt-5 flex justify-end">
+                <button onclick="closeConceptModal()" class="px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-semibold transition">
+                    Entendido, regresar al panel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Cuerpo Principal -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- ================= SECCIÓN 1: CONCEPTOS CLAVE ================= -->
+        <section id="section-concepts" class="space-y-6">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <div class="max-w-3xl">
+                    <div class="flex items-center space-x-2 mb-2">
+                        <span class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-0.5 rounded-full flex items-center">
+                            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse-badge mr-1.5"></span>
+                            Modo Interactivo Aprendizaje PhD
+                        </span>
+                    </div>
+                    <h1 class="text-2xl font-bold text-slate-900 tracking-tight mb-2">Fundamentos de Cientometría para Investigadores</h1>
+                    <p class="text-slate-600 text-xs sm:text-sm leading-relaxed">
+                        Explora los conceptos clave que evaluarán tus revisores de tesis. Haz clic en los íconos con ayuda flotante <span class="inline-flex items-center justify-center w-5 h-5 bg-sky-500 text-white rounded-full text-[10px] font-bold animate-pulse-badge">?</span> para desplegar ejemplos pedagógicos interactivos.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Grilla de Tarjetas de Conceptos -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+                <!-- 1. Métrica de Citas Calculadora -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between hover:shadow-md transition-shadow relative">
+                    <button onclick="openConceptModal('hindex')" class="absolute top-4 right-4 bg-sky-100 hover:bg-sky-200 text-sky-700 w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs animate-pulse-badge shadow-sm" title="Haz clic para ver explicación interactiva">
+                        ?
+                    </button>
+                    <div>
+                        <div class="w-10 h-10 rounded-lg bg-sky-100 text-sky-700 flex items-center justify-center font-bold text-lg mb-4">
+                            <i class="fa-solid fa-chart-bar"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-2 flex items-center">
+                            Índice h & Métricas
+                            <span class="ml-2 text-[10px] bg-sky-100 text-sky-700 px-2 py-0.5 rounded-full font-mono cursor-pointer" onclick="openConceptModal('hindex')">Ver guía <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i></span>
+                        </h3>
+                        <p class="text-xs text-slate-600 mb-4">
+                            Mide simultáneamente la <strong>productividad</strong> (número de publicaciones) y el <strong>impacto</strong> (citas recibidas).
+                        </p>
+                    </div>
+                    <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 space-y-3">
+                        <label class="block text-xs font-semibold text-slate-500 uppercase tracking-wider">Simulador de Citas en Tu Tesis</label>
+                        <input type="text" id="h-index-input" value="45, 32, 18, 12, 10, 8, 5, 2, 1, 0" class="w-full px-3 py-1.5 text-xs font-mono border rounded border-slate-300 focus:ring-2 focus:ring-sky-500 focus:outline-none" placeholder="Citas separadas por comas">
+                        <div class="grid grid-cols-3 gap-2 text-center pt-1">
+                            <div class="bg-white p-2 rounded border border-slate-200">
+                                <span class="block text-[10px] text-slate-400 uppercase font-semibold">Índice h</span>
+                                <span id="val-hindex" class="font-bold text-sky-600 text-base">6</span>
+                            </div>
+                            <div class="bg-white p-2 rounded border border-slate-200">
+                                <span class="block text-[10px] text-slate-400 uppercase font-semibold">Índice g</span>
+                                <span id="val-gindex" class="font-bold text-indigo-600 text-base">10</span>
+                            </div>
+                            <div class="bg-white p-2 rounded border border-slate-200">
+                                <span class="block text-[10px] text-slate-400 uppercase font-semibold">i10-Index</span>
+                                <span id="val-i10index" class="font-bold text-slate-700 text-base">5</span>
+                            </div>
+                        </div>
+                        <button onclick="calculateHIndex()" class="w-full py-1.5 text-xs font-semibold bg-sky-600 hover:bg-sky-700 text-white rounded transition">Calcular y Analizar</button>
+                    </div>
+                </div>
+
+                <!-- 2. Co-cita vs Acoplamiento Bibliográfico -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between hover:shadow-md transition-shadow relative">
+                    <button onclick="openConceptModal('coupling')" class="absolute top-4 right-4 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs animate-pulse-badge shadow-sm" title="Haz clic para ver explicación interactiva">
+                        ?
+                    </button>
+                    <div>
+                        <div class="w-10 h-10 rounded-lg bg-indigo-100 text-indigo-700 flex items-center justify-center font-bold text-lg mb-4">
+                            <i class="fa-solid fa-code-merge"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-2 flex items-center">
+                            Co-Cita vs. Acoplamiento
+                            <span class="ml-2 text-[10px] bg-indigo-100 text-indigo-700 px-2 py-0.5 rounded-full font-mono cursor-pointer" onclick="openConceptModal('coupling')">Ver guía <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i></span>
+                        </h3>
+                        <p class="text-xs text-slate-600 mb-3">
+                            Técnicas para mapear la estructura intelectual de un área temática.
+                        </p>
+                    </div>
+                    
+                    <!-- Minilaboratorio interactivo de Conexión -->
+                    <div class="bg-slate-900 text-slate-200 p-3.5 rounded-xl font-mono text-xs space-y-2.5">
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-2">
+                            <span class="text-[11px] font-semibold text-slate-400">Simulador Dinámico:</span>
+                            <div class="flex space-x-1">
+                                <button onclick="setCouplingSim('coupling')" id="sim-btn-coupling" class="px-2 py-0.5 rounded text-[10px] bg-indigo-600 text-white font-sans font-semibold">Acoplamiento</button>
+                                <button onclick="setCouplingSim('cocitation')" id="sim-btn-cocitation" class="px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-400 font-sans font-semibold">Co-Citación</button>
+                            </div>
+                        </div>
+                        <div id="coupling-sim-box" class="space-y-1.5 text-[11px]">
+                            <!-- Dinámico vía JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Altmetrics e Impacto Social DINÁMICO -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between hover:shadow-md transition-shadow relative">
+                    <button onclick="openConceptModal('altmetrics')" class="absolute top-4 right-4 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs animate-pulse-badge shadow-sm" title="Haz clic para ver explicación interactiva">
+                        ?
+                    </button>
+                    <div>
+                        <div class="w-10 h-10 rounded-lg bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-lg mb-4">
+                            <i class="fa-solid fa-share-nodes"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-2 flex items-center">
+                            Altmetrics Dinámico
+                            <span class="ml-2 text-[10px] bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-mono cursor-pointer" onclick="openConceptModal('altmetrics')">Ver guía <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i></span>
+                        </h3>
+                        <p class="text-xs text-slate-600 mb-3">
+                            Monitorea la divulgación fuera de la academia: redes sociales, políticas públicas y noticias.
+                        </p>
+                    </div>
+
+                    <!-- Controles Dinámicos de Altmetrics -->
+                    <div class="space-y-2 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+                        <div class="flex items-center justify-between text-[11px]">
+                            <span class="font-semibold text-slate-600">Perfiles de Impacto:</span>
+                            <select id="altmetric-preset-select" onchange="changeAltmetricPreset(this.value)" class="text-[11px] bg-white border border-slate-300 rounded px-1.5 py-0.5 focus:outline-none text-slate-700">
+                                <option value="dataset">Responder a Dataset Activo</option>
+                                <option value="viral">Alta Atención Redes/Noticias</option>
+                                <option value="academic">Clásico Académico (Citas)</option>
+                                <option value="policy">Impacto en Políticas Públicas</option>
+                            </select>
+                        </div>
+                        <div class="h-44 relative w-full flex items-center justify-center">
+                            <canvas id="altmetricRadarCanvas"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 4. Índice de Price -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between hover:shadow-md transition-shadow relative">
+                    <button onclick="openConceptModal('price')" class="absolute top-4 right-4 bg-amber-100 hover:bg-amber-200 text-amber-700 w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs animate-pulse-badge shadow-sm" title="Haz clic para ver explicación interactiva">
+                        ?
+                    </button>
+                    <div>
+                        <div class="w-10 h-10 rounded-lg bg-amber-100 text-amber-700 flex items-center justify-center font-bold text-lg mb-4">
+                            <i class="fa-solid fa-compass"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-2 flex items-center">
+                            Frente de Investigación
+                            <span class="ml-2 text-[10px] bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full font-mono cursor-pointer" onclick="openConceptModal('price')">Ver guía <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i></span>
+                        </h3>
+                        <p class="text-xs text-slate-600 mb-4">
+                            <strong>Índice de Price:</strong> % de referencias publicadas en los últimos 5 años. Mide la obsolescencia y frescura del tema.
+                        </p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-2">
+                        <div class="flex justify-between text-xs text-slate-600">
+                            <span>Velocidad del Campo</span>
+                            <span class="font-bold text-amber-600" id="prices-idx-val">68% (Frente Rápido)</span>
+                        </div>
+                        <div class="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+                            <div class="bg-amber-500 h-2.5 rounded-full" style="width: 68%;"></div>
+                        </div>
+                        <p class="text-[11px] text-slate-500 italic mt-1">Los revisores exigen referencias recientes si el índice de Price es alto.</p>
+                    </div>
+                </div>
+
+                <!-- 5. Ley de Bradford -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between hover:shadow-md transition-shadow relative">
+                    <button onclick="openConceptModal('bradford')" class="absolute top-4 right-4 bg-purple-100 hover:bg-purple-200 text-purple-700 w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs animate-pulse-badge shadow-sm" title="Haz clic para ver explicación interactiva">
+                        ?
+                    </button>
+                    <div>
+                        <div class="w-10 h-10 rounded-lg bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-lg mb-4">
+                            <i class="fa-solid fa-layer-group"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-2 flex items-center">
+                            Ley de Bradford
+                            <span class="ml-2 text-[10px] bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-mono cursor-pointer" onclick="openConceptModal('bradford')">Ver guía <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i></span>
+                        </h3>
+                        <p class="text-xs text-slate-600 mb-4">
+                            Identifica las revistas "núcleo" especializadas donde debes enviar tus mejores avances de tesis.
+                        </p>
+                    </div>
+                    <div class="space-y-1.5 text-xs">
+                        <div class="bg-purple-600 text-white p-2 rounded flex justify-between font-semibold">
+                            <span>Zona 1: Núcleo Especializado (Revistas Q1)</span>
+                            <span>33% Artículos</span>
+                        </div>
+                        <div class="bg-purple-400 text-white p-2 rounded flex justify-between">
+                            <span>Zona 2: Campo Aliado (Q2/Q3)</span>
+                            <span>33% Artículos</span>
+                        </div>
+                        <div class="bg-purple-200 text-slate-800 p-2 rounded flex justify-between">
+                            <span>Zona 3: Revistas Periféricas</span>
+                            <span>33% Artículos</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. Ley de Lotka -->
+                <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between hover:shadow-md transition-shadow relative">
+                    <button onclick="openConceptModal('lotka')" class="absolute top-4 right-4 bg-rose-100 hover:bg-rose-200 text-rose-700 w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs animate-pulse-badge shadow-sm" title="Haz clic para ver explicación interactiva">
+                        ?
+                    </button>
+                    <div>
+                        <div class="w-10 h-10 rounded-lg bg-rose-100 text-rose-700 flex items-center justify-center font-bold text-lg mb-4">
+                            <i class="fa-solid fa-users-viewfinder"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-slate-900 mb-2 flex items-center">
+                            Ley de Lotka
+                            <span class="ml-2 text-[10px] bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full font-mono cursor-pointer" onclick="openConceptModal('lotka')">Ver guía <i class="fa-solid fa-arrow-up-right-from-square text-[9px]"></i></span>
+                        </h3>
+                        <p class="text-xs text-slate-600 mb-4">
+                            Distribución de la productividad de autores. Permite detectar a los líderes mundiales en tu campo.
+                        </p>
+                    </div>
+                    <div class="bg-slate-50 p-3 rounded-lg border border-slate-200">
+                        <div class="text-xs text-slate-600 mb-2 flex justify-between">
+                            <span>Productividad de Autores:</span>
+                            <span class="font-mono font-semibold text-rose-600">60% autor único</span>
+                        </div>
+                        <div class="text-[11px] text-slate-500">
+                            Identifica al top 5% de autores más citados para solicitarles estancias o revisión de pares.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- ================= SECCIÓN 2: LABORATORIO DE DATOS ================= -->
+        <section id="section-simulator" class="space-y-6 hidden">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Simulador de Datasets e Importador CSV / XLSX (Excel)</h2>
+                        <p class="text-slate-600 text-sm mt-1">
+                            Carga datos predefinidos o importa tus propios archivos exportados de Scopus, Web of Science o Google Scholar (Formatos <strong>.csv, .xlsx, .xls</strong>).
+                        </p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <label class="cursor-pointer bg-sky-600 hover:bg-sky-700 text-white font-semibold px-4 py-2 rounded-lg text-sm transition flex items-center shadow-sm">
+                            <i class="fa-solid fa-file-excel mr-2 text-emerald-300"></i>Cargar CSV o Excel (.xlsx)
+                            <input type="file" id="datasetFileInput" accept=".csv, .xlsx, .xls" class="hidden" onchange="handleDatasetUpload(event)">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Botones de Datasets Predefinidos -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-6">
+                    <button onclick="loadPresetDataset('ai_healthcare')" class="p-4 border rounded-xl border-sky-200 bg-sky-50/50 hover:bg-sky-50 text-left transition flex items-start space-x-3">
+                        <div class="p-2 bg-sky-500 text-white rounded-lg"><i class="fa-solid fa-brain"></i></div>
+                        <div>
+                            <h4 class="font-bold text-sm text-slate-900">IA en Salud</h4>
+                            <p class="text-xs text-slate-500 mt-1">2018–2026 • 150 Artículos • Visión Médica y Diagnóstico</p>
+                        </div>
+                    </button>
+                    <button onclick="loadPresetDataset('quantum')" class="p-4 border rounded-xl border-purple-200 bg-purple-50/50 hover:bg-purple-50 text-left transition flex items-start space-x-3">
+                        <div class="p-2 bg-purple-500 text-white rounded-lg"><i class="fa-solid fa-atom"></i></div>
+                        <div>
+                            <h4 class="font-bold text-sm text-slate-900">Computación Cuántica</h4>
+                            <p class="text-xs text-slate-500 mt-1">2015–2026 • 120 Artículos • Qubits y Corrección de Errores</p>
+                        </div>
+                    </button>
+                    <button onclick="loadPresetDataset('climate')" class="p-4 border rounded-xl border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50 text-left transition flex items-start space-x-3">
+                        <div class="p-2 bg-emerald-500 text-white rounded-lg"><i class="fa-solid fa-leaf"></i></div>
+                        <div>
+                            <h4 class="font-bold text-sm text-slate-900">Energía Sostenible</h4>
+                            <p class="text-xs text-slate-500 mt-1">2016–2026 • 140 Artículos • Tecnología Solar y Baterías</p>
+                        </div>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tabla de Vista Previa del Dataset -->
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                <div class="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
+                    <span class="font-bold text-sm text-slate-700" id="dataset-title-badge">Dataset Activo: IA en Salud</span>
+                    <span class="text-xs font-mono bg-sky-100 text-sky-800 px-2.5 py-1 rounded-full font-semibold" id="dataset-count-badge">0 artículos</span>
+                </div>
+                <div class="overflow-x-auto max-h-96">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead class="bg-slate-100 text-slate-600 font-semibold sticky top-0 border-b border-slate-200">
+                            <tr>
+                                <th class="p-3">Título</th>
+                                <th class="p-3">Autores</th>
+                                <th class="p-3">Año</th>
+                                <th class="p-3">Revista</th>
+                                <th class="p-3">Citas</th>
+                                <th class="p-3">Palabras Clave</th>
+                            </tr>
+                        </thead>
+                        <tbody id="dataset-table-body" class="divide-y divide-slate-100 font-sans text-slate-700">
+                            <!-- Contenido dinámico -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= SECCIÓN 3: ANALÍTICA DEL CAMPO ================= -->
+        <section id="section-analytics" class="space-y-6 hidden">
+            <!-- Tarjetas Resumen -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <span class="text-xs font-semibold text-slate-500 uppercase">Publicaciones Totales</span>
+                    <div class="text-2xl font-bold text-slate-900 mt-1" id="stat-total-pubs">0</div>
+                    <span class="text-xs text-emerald-600 font-medium mt-1 inline-block"><i class="fa-solid fa-arrow-trend-up mr-1"></i>Crecimiento Activo</span>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <span class="text-xs font-semibold text-slate-500 uppercase">Promedio Citas / Artículo</span>
+                    <div class="text-2xl font-bold text-slate-900 mt-1" id="stat-avg-cites">0.0</div>
+                    <span class="text-xs text-slate-500 mt-1 inline-block">Proxy de Factor de Impacto</span>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <span class="text-xs font-semibold text-slate-500 uppercase">Autor Más Prolífico</span>
+                    <div class="text-lg font-bold text-sky-600 mt-1 truncate" id="stat-top-author">-</div>
+                    <span class="text-xs text-slate-500 mt-1 inline-block" id="stat-top-author-pubs">0 publicaciones</span>
+                </div>
+                <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                    <span class="text-xs font-semibold text-slate-500 uppercase">Revista Núcleo (Bradford)</span>
+                    <div class="text-lg font-bold text-indigo-600 mt-1 truncate" id="stat-top-journal">-</div>
+                    <span class="text-xs text-slate-500 mt-1 inline-block" id="stat-top-journal-pubs">0 publicaciones</span>
+                </div>
+            </div>
+
+            <!-- Gráficos -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <!-- Gráfico de Velocidad de Publicación -->
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-900 mb-1">Velocidad de Publicación y Citas</h3>
+                    <p class="text-xs text-slate-500 mb-4">Tendencia de volumen anual en el área seleccionada</p>
+                    <div class="h-64 relative">
+                        <canvas id="pubVelocityChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Gráfico Distribuición de Revistas (Bradford) -->
+                <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
+                    <h3 class="font-bold text-slate-900 mb-1">Distribución de Revistas (Núcleo Bradford)</h3>
+                    <p class="text-xs text-slate-500 mb-4">Principales revistas del campo académico</p>
+                    <div class="h-64 relative">
+                        <canvas id="journalDistChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= SECCIÓN 4: MAPA DE CO-OCURRENCIA (INTERACTIVO & EDITABLE) ================= -->
+        <section id="section-network" class="space-y-6 hidden">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Mapa Interactivo y Editor de Co-ocurrencia</h2>
+                        <p class="text-slate-600 text-sm mt-1">
+                            Visualiza y personaliza nodos de palabras clave, edita colores de fondo y texto, y agrega o elimina relaciones dinámicas entre conceptos.
+                        </p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="resetNetworkLayout()" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg transition">
+                            <i class="fa-solid fa-arrows-rotate mr-1"></i> Reorganizar Red
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Panel de Control y Edición Dinámica de Nodos y Conexiones -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                    <!-- Formulario: Agregar / Editar Nodo -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center">
+                            <i class="fa-solid fa-circle-plus text-sky-600 mr-1.5"></i> Agregar / Editar Nodo
+                        </h4>
+                        <div>
+                            <label class="block text-[11px] font-medium text-slate-600 mb-1">Nombre del Nodo (Concepto)</label>
+                            <input type="text" id="node-name-input" placeholder="Ej. Aprendizaje Profundo" class="w-full px-2.5 py-1.5 text-xs border rounded border-slate-300 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                        </div>
+                        <div class="grid grid-cols-3 gap-2">
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-600 mb-1">Tamaño</label>
+                                <input type="number" id="node-size-input" value="18" min="8" max="40" class="w-full px-2.5 py-1.5 text-xs border rounded border-slate-300">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-600 mb-1">Fondo Nodo</label>
+                                <input type="color" id="node-color-input" value="#0284c7" class="w-full h-8 p-0 border rounded border-slate-300 cursor-pointer">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-600 mb-1">Color Texto</label>
+                                <input type="color" id="node-textcolor-input" value="#ffffff" class="w-full h-8 p-0 border rounded border-slate-300 cursor-pointer">
+                            </div>
+                        </div>
+                        <button onclick="addOrUpdateNode()" class="w-full py-1.5 text-xs font-semibold bg-sky-600 hover:bg-sky-700 text-white rounded transition flex items-center justify-center">
+                            <i class="fa-solid fa-plus-circle mr-1"></i> Guardar / Crear Nodo
+                        </button>
+                    </div>
+
+                    <!-- Formulario: Crear o Modificar Relación (Enlaces) -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+                        <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 flex items-center">
+                            <i class="fa-solid fa-link text-indigo-600 mr-1.5"></i> Conectar / Modificar Enlace
+                        </h4>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-600 mb-1">Nodo Origen A</label>
+                                <select id="link-source-select" class="w-full px-2 py-1.5 text-xs border rounded border-slate-300 focus:outline-none">
+                                    <!-- Opciones dinámicas -->
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-600 mb-1">Nodo Destino B</label>
+                                <select id="link-target-select" class="w-full px-2 py-1.5 text-xs border rounded border-slate-300 focus:outline-none">
+                                    <!-- Opciones dinámicas -->
+                                </select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-[11px] font-medium text-slate-600 mb-1">Fuerza de Relación (Grosor Enlace: 1-10)</label>
+                            <input type="range" id="link-weight-input" min="1" max="10" value="3" class="w-full accent-indigo-600">
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="addOrUpdateLink()" class="w-full py-1.5 text-xs font-semibold bg-indigo-600 hover:bg-indigo-700 text-white rounded transition">
+                                <i class="fa-solid fa-link mr-1"></i> Vincular / Actualizar
+                            </button>
+                            <button onclick="removeLink()" class="px-3 py-1.5 text-xs font-semibold bg-rose-100 hover:bg-rose-200 text-rose-700 rounded transition">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Lista de Nodos Activos y Acción de Borrado -->
+                    <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-700 mb-2 flex items-center justify-between">
+                                <span><i class="fa-solid fa-list-check text-emerald-600 mr-1.5"></i> Nodos en Red</span>
+                                <span class="font-mono text-[11px] text-slate-500" id="nodes-count-lbl">0 nodos</span>
+                            </h4>
+                            <div id="nodes-chip-list" class="flex flex-wrap gap-1.5 max-h-28 overflow-y-auto p-1 bg-white rounded border border-slate-200">
+                                <!-- Chips dinámicos -->
+                            </div>
+                        </div>
+                        <p class="text-[11px] text-slate-500 mt-2 italic">Puedes arrastrar los nodos directamente en el lienzo para ajustar su distribución manualmente.</p>
+                    </div>
+                </div>
+
+                <!-- Marco de Canvas Interactivo -->
+                <div class="relative w-full h-[520px] bg-slate-950 rounded-xl overflow-hidden border border-slate-800 shadow-inner flex items-center justify-center">
+                    <canvas id="networkCanvas" class="w-full h-full cursor-grab active:cursor-grabbing"></canvas>
+                    
+                    <!-- Leyenda Flotante -->
+                    <div class="absolute bottom-4 left-4 bg-slate-900/90 backdrop-blur border border-slate-800 p-3 rounded-lg text-xs text-slate-300 space-y-1">
+                        <div class="font-bold text-sky-400 mb-1">Guía del Mapa Dinámico:</div>
+                        <div class="flex items-center space-x-2 text-[11px]">
+                            <span class="w-2.5 h-2.5 rounded-full bg-sky-400 inline-block"></span>
+                            <span>Arrastra un nodo para desplazarlo en el canvas.</span>
+                        </div>
+                        <div class="flex items-center space-x-2 text-[11px]">
+                            <span class="w-2.5 h-2.5 rounded-full bg-indigo-400 inline-block"></span>
+                            <span>Los enlaces ejercen repulsión/atracción automática.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ================= SECCIÓN 5: ASESOR DE ESTRATEGIA IA ================= -->
+        <section id="section-advisor" class="space-y-6 hidden">
+            <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+                <div class="max-w-3xl">
+                    <div class="inline-flex items-center space-x-2 bg-sky-50 text-sky-700 px-3 py-1 rounded-full text-xs font-semibold mb-3 border border-sky-200">
+                        <i class="fa-solid fa-sparkles"></i>
+                        <span>Potenciado por la API Gemini 3 Flash</span>
+                    </div>
+                    <h2 class="text-2xl font-bold text-slate-900 tracking-tight">Asesor de Publicación Estratégica PhD</h2>
+                    <p class="text-slate-600 text-sm mt-1">
+                        Ingresa tu tema de investigación, borrador de resumen o título de tesis para generar recomendaciones cientométricas personalizadas sobre revistas objetivo, optimización de citas y redes de colaboración.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
+                    <!-- Columna de Entrada -->
+                    <div class="lg:col-span-1 space-y-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Campo / Dominio de Investigación</label>
+                            <input type="text" id="advisor-field" value="Aprendizaje Profundo para Segmentación de Imágenes Médicas" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Resumen / Propuesta de Tesis</label>
+                            <textarea id="advisor-abstract" rows="6" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:ring-2 focus:ring-sky-500 focus:outline-none" placeholder="Pega aquí el resumen o borrador de tu artículo..."></textarea>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-700 uppercase mb-1">Etapa Doctoral</label>
+                            <select id="advisor-stage" class="w-full px-3 py-2 text-sm border rounded-lg border-slate-300 focus:ring-2 focus:ring-sky-500 focus:outline-none">
+                                <option value="Inicial (Años 1-2): Revisión de Literatura y Primer Artículo">Inicial (Años 1-2): Revisión y Primer Trabajo</option>
+                                <option value="Intermedia (Años 2-3): Envíos a Revistas Núcleo Q1/Q2">Intermedia (Años 2-3): Envíos a Revistas Principales</option>
+                                <option value="Avanzada (Años 4+): Cierre de Tesis y Posdoctorado">Avanzada (Años 4+): Artículos Finales y Posdoc</option>
+                            </select>
+                        </div>
+
+                        <button onclick="generateScientometricStrategy()" id="btn-generate-advisor" class="w-full py-3 bg-gradient-to-r from-sky-600 to-indigo-600 hover:from-sky-700 hover:to-indigo-700 text-white font-bold rounded-lg shadow-md transition flex items-center justify-center space-x-2 text-sm">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            <span>Generar Plan Estratégico Doctoral</span>
+                        </button>
+                    </div>
+
+                    <!-- Columna de Resultados de la IA -->
+                    <div class="lg:col-span-2">
+                        <div id="advisor-loading" class="hidden h-full min-h-[300px] border border-slate-200 rounded-xl bg-slate-50 flex flex-col items-center justify-center p-6 space-y-4">
+                            <div class="w-12 h-12 border-4 border-sky-600 border-t-transparent rounded-full animate-spin"></div>
+                            <p class="text-sm font-semibold text-slate-700">Analizando citas del dominio y sintetizando estrategia...</p>
+                        </div>
+
+                        <div id="advisor-empty" class="h-full min-h-[300px] border border-dashed border-slate-300 rounded-xl bg-slate-50 flex flex-col items-center justify-center p-6 text-center text-slate-400">
+                            <i class="fa-solid fa-compass-drafting text-4xl mb-3 text-slate-300"></i>
+                            <p class="text-sm font-medium">Tu informe estratégico cientométrico aparecerá aquí.</p>
+                            <p class="text-xs text-slate-400 max-w-sm mt-1">Incluye matriz de revistas objetivo, optimización de palabras clave y aceleración de impacto.</p>
+                        </div>
+
+                        <div id="advisor-result" class="hidden bg-white border border-slate-200 rounded-xl p-6 space-y-6 shadow-sm">
+                            <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                                <h3 class="font-bold text-slate-900 text-lg flex items-center">
+                                    <i class="fa-solid fa-shield-halved text-sky-600 mr-2"></i> Hoja de Ruta Publicitaria Doctorando
+                                </h3>
+                                <button onclick="copyAdvisorReport()" class="text-xs px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-md font-medium transition">
+                                    <i class="fa-solid fa-copy mr-1"></i> Copiar Estrategia
+                                </button>
+                            </div>
+
+                            <div id="advisor-output-text" class="prose prose-slate max-w-none text-xs sm:text-sm leading-relaxed space-y-4">
+                                <!-- Salida de IA renderizada aquí -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Pie de página -->
+    <footer class="bg-white border-t border-slate-200 py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500 space-y-1">
+            <p><strong>ScientoLab PhD</strong> — Sistema de Aprendizaje Cientométrico y Estrategia de Publicación</p>
+            <p>Diseñado para Estudiantes de Doctorado e Investigadores Académicos.</p>
+            <p class="text-slate-600 font-semibold pt-2 text-sm">Desarrollado con la colaboración de <span class="text-sky-700">Dr. Luis Gerardo Valle</span></p>
+        </div>
+    </footer>
+
+    <!-- ================= LÓGICA JAVASCRIPT EN ESPAÑOL ================= -->
+    <script>
+        /* ----------------------------------------------------
+           0. NOTIFICACIONES TOAST Y SISTEMA DE NAVEGACIÓN
+           ---------------------------------------------------- */
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            if (!container) return;
+
+            const toast = document.createElement('div');
+            const bgClass = type === 'error' ? 'bg-rose-600 text-white' : 'bg-slate-900 text-white';
+            const iconClass = type === 'error' ? 'fa-circle-xmark' : 'fa-circle-check text-sky-400';
+
+            toast.className = `pointer-events-auto flex items-center space-x-2 px-4 py-3 rounded-lg shadow-xl text-xs font-medium transition-all duration-300 opacity-0 transform translate-y-2 ${bgClass}`;
+            toast.innerHTML = `<i class="fa-solid ${iconClass}"></i><span>${message}</span>`;
+
+            container.appendChild(toast);
+
+            requestAnimationFrame(() => {
+                toast.classList.remove('opacity-0', 'translate-y-2');
+            });
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function switchTab(tabId) {
+            const sections = ['concepts', 'simulator', 'analytics', 'network', 'advisor'];
+            sections.forEach(s => {
+                const secEl = document.getElementById(`section-${s}`);
+                const btnEl = document.getElementById(`tab-${s}`);
+                if (secEl) secEl.classList.add('hidden');
+                if (btnEl) {
+                    btnEl.className = 'nav-btn px-4 py-2 rounded-md text-sm font-medium transition-all text-slate-300 hover:text-white hover:bg-slate-800';
+                }
+            });
+
+            const activeSec = document.getElementById(`section-${tabId}`);
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            if (activeSec) activeSec.classList.remove('hidden');
+            if (activeBtn) activeBtn.className = 'nav-btn active px-4 py-2 rounded-md text-sm font-medium transition-all bg-sky-600 text-white';
+
+            // Cerrar menú móvil si está abierto
+            const mobileMenu = document.getElementById('mobile-menu');
+            if (mobileMenu && !mobileMenu.classList.contains('hidden')) {
+                mobileMenu.classList.add('hidden');
+            }
+
+            // Inicializaciones según pestaña
+            if (tabId === 'analytics') {
+                renderAnalyticsCharts();
+            } else if (tabId === 'network') {
+                setTimeout(initNetworkGraph, 50);
+            } else if (tabId === 'concepts') {
+                setTimeout(initAltmetricRadar, 50);
+            }
+        }
+
+        function toggleMobileMenu() {
+            const menu = document.getElementById('mobile-menu');
+            if (menu) menu.classList.toggle('hidden');
+        }
+
+        /* ----------------------------------------------------
+           1. DICCIONARIO PEDAGÓGICO PARA MODAL DE CONCEPTOS
+           ---------------------------------------------------- */
+        const CONCEPT_PEDAGOGY = {
+            hindex: {
+                title: "Índice h, g e i10",
+                icon: "fa-chart-bar",
+                iconBg: "bg-sky-100 text-sky-700",
+                simple: "El índice h te dice cuántos artículos importantes ha escrito un investigador. Un índice h de 5 significa que la persona tiene 5 artículos que han sido citados al menos 5 veces cada uno. Evita que alguien 'engañe' al sistema publicando 100 artículos sin trascendencia.",
+                example: "En tu tesis de doctorado, si publicas 3 artículos bien estructurados y cada uno recibe al menos 3 citas de otros investigadores de la comunidad académica, tu índice h será 3.",
+                tip: "Tus evaluadores buscarán que tus citas no provengan de un único artículo 'viral' aislado, sino de una línea de investigación consistente."
+            },
+            coupling: {
+                title: "Acoplamiento Bibliográfico vs Co-Citación",
+                icon: "fa-code-merge",
+                iconBg: "bg-indigo-100 text-indigo-700",
+                simple: "El Acoplamiento Bibliográfico mira al pasado: ocurre si tu artículo A y el artículo B de tu compañero citan los mismos libros clásicos. La Co-citación mira al futuro: ocurre cuando un tercer investigador cita tu trabajo A y el trabajo B al mismo tiempo.",
+                example: "Si dos artículos en tu marco teórico comparten las mismas 10 referencias bibliográficas, están acoplados bibliográficamente. Esto confirma que ambos pertenecen al mismo marco teórico.",
+                tip: "Utiliza el acoplamiento bibliográfico en los primeros años de tu doctorado para mapear el estado del arte de tu marco teórico."
+            },
+            altmetrics: {
+                title: "Altmetrics (Métricas Alternativas de Impacto)",
+                icon: "fa-share-nodes",
+                iconBg: "bg-emerald-100 text-emerald-700",
+                simple: "Las citas en revistas tardan hasta 2 o 3 años en reflejarse. Las Altmetrics miden la divulgación inmediata: cuánta gente guardó tu artículo en Mendeley, lo compartió en X (Twitter), lo citó en Wikipedia o en políticas públicas.",
+                example: "Si publicas un hallazgo sobre vacunas y el Ministerio de Salud lo cita en su documento de política pública o se menciona en noticias, tendrás una puntuación Altmetric muy alta antes de recibir citas académicas.",
+                tip: "Ideal para incluir en tu informe de beca o tesis si buscas demostrar 'Impacto Social o Político' de tu investigación."
+            },
+            price: {
+                title: "Índice de Price y Frente de Investigación",
+                icon: "fa-compass",
+                iconBg: "bg-amber-100 text-amber-700",
+                simple: "Indica qué tan 'fresco' o acelerado es un tema. Mide el porcentaje de referencias bibliográficas de los últimos 5 años. Si es mayor al 50%, estás en la frontera del conocimiento humano.",
+                example: "En temas como IA o Genómica, casi el 80% de las citas deben ser de los últimos 3 a 5 años. Si utilizas citas viejas, el revisor pensará que tu marco teórico está desactualizado.",
+                tip: "Si tu área tiene un Índice de Price alto, asegúrate de citar preprints recientes (arXiv, bioRxiv) y artículos de revistas del año en curso."
+            },
+            bradford: {
+                title: "Ley de Dispersión de Bradford",
+                icon: "fa-layer-group",
+                iconBg: "bg-purple-100 text-purple-700",
+                simple: "Establece que las publicaciones de un tema no están esparcidas por igual: unas pocas revistas líderes (el 'Núcleo') concentran la gran mayoría de los mejores trabajos.",
+                example: "En lugar de revisar 500 revistas distintas, la Ley de Bradford demuestra que leyendo las 5 principales revistas de tu núcleo temático cubrirás más del 30% del conocimiento clave mundial.",
+                tip: "No pierdas tiempo enviando tu artículo a revistas al azar. Identifica la 'Zona Núcleo' de Bradford para tus envíos de tesis."
+            },
+            lotka: {
+                title: "Ley de Lotka de Productividad",
+                icon: "fa-users-viewfinder",
+                iconBg: "bg-rose-100 text-rose-700",
+                simple: "Muestra que la gran mayoría de las personas publican 1 solo artículo en su vida, mientras que un número muy reducido de expertos 'superestrellas' publica decenas de artículos.",
+                example: "En tu campo de estudio, aproximadamente el 60% de los autores solo habrán escrito un trabajo. Un 5% de autores prolíficos lideran la conversación científica mundial.",
+                tip: "Busca establecer contacto o solicitar estancias doctorales con el top 5% de autores identificados por Lotka en tu área."
+            }
+        };
+
+        function openConceptModal(key) {
+            const data = CONCEPT_PEDAGOGY[key];
+            if (!data) return;
+
+            document.getElementById('modal-title').innerText = data.title;
+            document.getElementById('modal-simple-desc').innerText = data.simple;
+            document.getElementById('modal-example').innerText = data.example;
+            document.getElementById('modal-tip').innerText = data.tip;
+
+            const iconBg = document.getElementById('modal-icon-bg');
+            iconBg.className = `w-10 h-10 rounded-xl flex items-center justify-center text-lg ${data.iconBg}`;
+            document.getElementById('modal-icon').className = `fa-solid ${data.icon}`;
+
+            document.getElementById('concept-modal').classList.remove('hidden');
+        }
+
+        function closeConceptModal() {
+            document.getElementById('concept-modal').classList.add('hidden');
+        }
+
+        /* ----------------------------------------------------
+           2. CÁLCULO DE ÍNDICE H, G, I10
+           ---------------------------------------------------- */
+        function calculateHIndex() {
+            const inputVal = document.getElementById('h-index-input').value;
+            const citations = inputVal.split(',')
+                .map(x => parseInt(x.trim()))
+                .filter(x => !isNaN(x))
+                .sort((a, b) => b - a);
+
+            if (citations.length === 0) {
+                document.getElementById('val-hindex').innerText = '0';
+                document.getElementById('val-gindex').innerText = '0';
+                document.getElementById('val-i10index').innerText = '0';
+                return;
+            }
+
+            // Index h
+            let h = 0;
+            for (let i = 0; i < citations.length; i++) {
+                if (citations[i] >= i + 1) {
+                    h = i + 1;
+                } else {
+                    break;
+                }
+            }
+
+            // Index g
+            let sum = 0;
+            let g = 0;
+            for (let i = 0; i < citations.length; i++) {
+                sum += citations[i];
+                if (sum >= Math.pow(i + 1, 2)) {
+                    g = i + 1;
+                }
+            }
+
+            // i10-index
+            const i10 = citations.filter(c => c >= 10).length;
+
+            document.getElementById('val-hindex').innerText = h;
+            document.getElementById('val-gindex').innerText = g;
+            document.getElementById('val-i10index').innerText = i10;
+        }
+
+        /* ----------------------------------------------------
+           3. SIMULADOR DE ACOPLAMIENTO EN TIEMPO REAL
+           ---------------------------------------------------- */
+        function setCouplingSim(mode) {
+            const box = document.getElementById('coupling-sim-box');
+            const btnCoupling = document.getElementById('sim-btn-coupling');
+            const btnCocitation = document.getElementById('sim-btn-cocitation');
+
+            if (mode === 'coupling') {
+                btnCoupling.className = "px-2 py-0.5 rounded text-[10px] bg-indigo-600 text-white font-sans font-semibold";
+                btnCocitation.className = "px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-400 font-sans font-semibold";
+                box.innerHTML = `
+                    <div class="text-sky-400 font-semibold">// Acoplamiento Bibliográfico (Estático)</div>
+                    <div class="flex justify-between items-center text-[11px] bg-slate-800/80 p-1.5 rounded">
+                        <span>Tu Artículo Tesis &rarr; [Cita Ref X, Ref Y]</span>
+                    </div>
+                    <div class="flex justify-between items-center text-[11px] bg-slate-800/80 p-1.5 rounded">
+                        <span>Artículo Rivales &rarr; [Cita Ref X, Ref Z]</span>
+                    </div>
+                    <div class="text-emerald-400 text-[10px] pt-1"><i class="fa-solid fa-circle-check mr-1"></i>¡Acoplados! Ambos compartieron la referencia X.</div>
+                `;
+            } else {
+                btnCoupling.className = "px-2 py-0.5 rounded text-[10px] bg-slate-800 text-slate-400 font-sans font-semibold";
+                btnCocitation.className = "px-2 py-0.5 rounded text-[10px] bg-indigo-600 text-white font-sans font-semibold";
+                box.innerHTML = `
+                    <div class="text-indigo-400 font-semibold">// Co-Citación (Dinámico en Evolución)</div>
+                    <div class="flex justify-between items-center text-[11px] bg-slate-800/80 p-1.5 rounded">
+                        <span>Artículo Futuro C &rarr; Cita [Tu Trabajo A + Trabajo B]</span>
+                    </div>
+                    <div class="text-amber-400 text-[10px] pt-1"><i class="fa-solid fa-diagram-next mr-1"></i>A medida que más investigadores los citen juntos, la co-citación aumenta.</div>
+                `;
+            }
+        }
+
+        /* ----------------------------------------------------
+           4. ALTMETRICS DINÁMICO CON PRESETS Y DATASET
+           ---------------------------------------------------- */
+        let altmetricRadarChartInstance = null;
+
+        function initAltmetricRadar() {
+            const canvas = document.getElementById('altmetricRadarCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            
+            if (altmetricRadarChartInstance) {
+                altmetricRadarChartInstance.destroy();
+            }
+
+            altmetricRadarChartInstance = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ['Citas Académicas', 'Mendeley', 'X/Twitter', 'Noticias/Medios', 'Políticas Públicas'],
+                    datasets: [{
+                        label: 'Puntuación Altmetric',
+                        data: [75, 80, 60, 45, 50],
+                        backgroundColor: 'rgba(16, 185, 129, 0.25)',
+                        borderColor: '#10b981',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#10b981',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: '#10b981'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            angleLines: { color: 'rgba(226, 232, 240, 0.8)' },
+                            grid: { color: 'rgba(226, 232, 240, 0.8)' },
+                            pointLabels: { 
+                                font: { size: 9, family: 'Inter', weight: '600' },
+                                color: '#475569'
+                            },
+                            ticks: { display: false },
+                            suggestedMin: 0,
+                            suggestedMax: 100
+                        }
+                    },
+                    plugins: { 
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.label}: ${context.raw} / 100 pts`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            const currentSelectVal = document.getElementById('altmetric-preset-select')?.value || 'dataset';
+            if (currentSelectVal === 'dataset') {
+                updateAltmetricFromDataset();
+            } else {
+                changeAltmetricPreset(currentSelectVal);
+            }
+        }
+
+        function changeAltmetricPreset(value) {
+            if (!altmetricRadarChartInstance) {
+                initAltmetricRadar();
+            }
+
+            let newData = [50, 50, 50, 50, 50];
+            let labelText = 'Impacto General';
+
+            if (value === 'dataset') {
+                updateAltmetricFromDataset();
+                return;
+            } else if (value === 'viral') {
+                newData = [30, 65, 95, 90, 40];
+                labelText = 'Perfil Viral en Redes';
+            } else if (value === 'academic') {
+                newData = [95, 85, 25, 20, 30];
+                labelText = 'Perfil Clásico Académico';
+            } else if (value === 'policy') {
+                newData = [60, 70, 45, 80, 95];
+                labelText = 'Perfil Impacto en Políticas';
+            }
+
+            altmetricRadarChartInstance.data.datasets[0].data = newData;
+            altmetricRadarChartInstance.data.datasets[0].label = labelText;
+            altmetricRadarChartInstance.update();
+            showToast(`Perfil Altmetric actualizado: ${labelText}`);
+        }
+
+        function updateAltmetricFromDataset() {
+            if (!altmetricRadarChartInstance) return;
+
+            let academicScore = 50, mendeleyScore = 55, twitterScore = 40, newsScore = 30, policyScore = 35;
+
+            if (currentDataset && currentDataset.length > 0) {
+                const totalCites = currentDataset.reduce((a, b) => a + (b.citations || 0), 0);
+                const avgCites = totalCites / currentDataset.length;
+
+                academicScore = Math.min(100, Math.max(15, Math.round(avgCites * 1.5 + 25)));
+                mendeleyScore = Math.min(100, Math.max(20, Math.round(academicScore * 1.1)));
+                twitterScore = Math.min(100, Math.max(10, Math.round(academicScore * 0.7 + 15)));
+                newsScore = Math.min(100, Math.max(5, Math.round(academicScore * 0.5 + 10)));
+                policyScore = Math.min(100, Math.max(5, Math.round(academicScore * 0.6 + 10)));
+            }
+
+            altmetricRadarChartInstance.data.datasets[0].data = [
+                academicScore,
+                mendeleyScore,
+                twitterScore,
+                newsScore,
+                policyScore
+            ];
+            altmetricRadarChartInstance.data.datasets[0].label = 'Basado en Dataset Activo';
+            altmetricRadarChartInstance.update();
+        }
+
+        /* ----------------------------------------------------
+           5. GESTIÓN DE DATASETS PREDEFINIDOS Y TABLA
+           ---------------------------------------------------- */
+        let currentDataset = [];
+
+        const PRESET_DATASETS = {
+            ai_healthcare: {
+                name: "IA en Salud",
+                data: [
+                    { title: "Deep learning for MRI tumor segmentation", authors: "Chen et al.", year: 2022, journal: "IEEE TMI", citations: 142, keywords: "Deep Learning, MRI, Segmentation, Tumor" },
+                    { title: "Convolutional networks in radiology diagnosis", authors: "Smith & Patel", year: 2021, journal: "Medical Image Analysis", citations: 89, keywords: "CNN, Radiology, Diagnosis, Computer Vision" },
+                    { title: "Transformers for clinical text mining", authors: "Garcia et al.", year: 2023, journal: "Journal of Biomedical Informatics", citations: 56, keywords: "Transformers, NLP, Clinical Notes, Mining" },
+                    { title: "Federated learning in multi-hospital studies", authors: "Zhang & Liu", year: 2023, journal: "Nature Digital Medicine", citations: 94, keywords: "Federated Learning, Privacy, Multi-hospital" },
+                    { title: "Explainable AI for ICU mortality prediction", authors: "Müller et al.", year: 2020, journal: "Artificial Intelligence in Medicine", citations: 110, keywords: "XAI, ICU, Mortality, Prediction" },
+                    { title: "AI-based electronic health record analytics", authors: "Kim et al.", year: 2019, journal: "JAMIA", citations: 78, keywords: "EHR, Analytics, Predictive Modeling" },
+                    { title: "Vision Transformers for histopathology", authors: "Alvarez & Rossi", year: 2024, journal: "Medical Image Analysis", citations: 31, keywords: "Vision Transformers, Histopathology, Oncology" }
+                ]
+            },
+            quantum: {
+                name: "Computación Cuántica",
+                data: [
+                    { title: "Fault-tolerant qubit architecture review", authors: "Preskill et al.", year: 2021, journal: "Quantum", citations: 210, keywords: "Qubits, Fault-tolerant, Quantum Error Correction" },
+                    { title: "Variational quantum eigensolvers for molecules", authors: "Kandala et al.", year: 2020, journal: "Nature Physics", citations: 175, keywords: "VQE, Chemistry, Quantum Simulation" },
+                    { title: "Quantum key distribution in satellite links", authors: "Liao et al.", year: 2018, journal: "Physical Review Letters", citations: 310, keywords: "QKD, Satellite, Quantum Cryptography" },
+                    { title: "Superconducting circuit advances", authors: "Devoret & Schoelkopf", year: 2019, journal: "Science", citations: 420, keywords: "Superconducting, Circuit QED, Hardware" },
+                    { title: "Benchmarking noisy intermediate-scale quantum systems", authors: "Arute et al.", year: 2022, journal: "IEEE Quantum", citations: 88, keywords: "NISQ, Benchmarking, Quantum Advantage" }
+                ]
+            },
+            climate: {
+                name: "Energía Sostenible",
+                data: [
+                    { title: "Perovskite solar cell efficiency breakthroughs", authors: "Green et al.", year: 2022, journal: "Nature Energy", citations: 260, keywords: "Perovskite, Solar Cells, Photovoltaics" },
+                    { title: "Solid-state lithium batteries for EV", authors: "Janek & Zeier", year: 2021, journal: "Nature Materials", citations: 340, keywords: "Solid-state, Lithium Batteries, EV" },
+                    { title: "Grid integration of variable renewables", authors: "Denholm et al.", year: 2020, journal: "Renewable Energy", citations: 115, keywords: "Grid Integration, Wind, Solar, Smart Grid" },
+                    { title: "Green hydrogen production via electrolysis", authors: "Chereslev et al.", year: 2023, journal: "Energy & Environmental Science", citations: 95, keywords: "Green Hydrogen, Electrolysis, Clean Energy" }
+                ]
+            }
+        };
+
+        function loadPresetDataset(key) {
+            const preset = PRESET_DATASETS[key];
+            if (!preset) return;
+
+            currentDataset = preset.data;
+            document.getElementById('dataset-title-badge').innerText = `Dataset Activo: ${preset.name}`;
+            renderDatasetTable();
+            updateAltmetricFromDataset();
+            showToast(`Cargado dataset predefinido: ${preset.name}`);
+
+            if (!document.getElementById('section-network').classList.contains('hidden')) {
+                initNetworkGraph();
+            }
+        }
+
+        function renderDatasetTable() {
+            const tbody = document.getElementById('dataset-table-body');
+            const countBadge = document.getElementById('dataset-count-badge');
+            if (!tbody) return;
+
+            countBadge.innerText = `${currentDataset.length} artículos`;
+            tbody.innerHTML = '';
+
+            currentDataset.forEach(item => {
+                const tr = document.createElement('tr');
+                tr.className = 'hover:bg-slate-50 transition';
+                tr.innerHTML = `
+                    <td class="p-3 font-semibold text-slate-900 max-w-xs truncate">${item.title}</td>
+                    <td class="p-3 text-slate-600">${item.authors}</td>
+                    <td class="p-3 font-mono text-slate-500">${item.year}</td>
+                    <td class="p-3 text-slate-700 font-medium">${item.journal}</td>
+                    <td class="p-3 font-mono font-bold text-sky-600">${item.citations}</td>
+                    <td class="p-3 text-slate-500 max-w-xs truncate">${item.keywords}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            updateAnalyticsStats();
+        }
+
+        /* ----------------------------------------------------
+           6. IMPORTADOR DE DATASETS (SOPORTE CSV + EXCEL .XLSX)
+           ---------------------------------------------------- */
+        function handleDatasetUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const fileName = file.name.toLowerCase();
+
+            if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    try {
+                        const data = new Uint8Array(e.target.result);
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+                        const json = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+
+                        if (json.length < 2) {
+                            showToast('El archivo Excel debe tener encabezados y filas de datos', 'error');
+                            return;
+                        }
+
+                        const parsed = [];
+                        for (let i = 1; i < json.length; i++) {
+                            const row = json[i];
+                            if (row && row.length >= 3) {
+                                parsed.push({
+                                    title: String(row[0] || 'Sin título'),
+                                    authors: String(row[1] || 'Autor Desconocido'),
+                                    year: parseInt(row[2]) || 2023,
+                                    journal: String(row[3] || 'Revista Académica'),
+                                    citations: parseInt(row[4]) || 0,
+                                    keywords: String(row[5] || 'General')
+                                });
+                            }
+                        }
+
+                        if (parsed.length > 0) {
+                            currentDataset = parsed;
+                            document.getElementById('dataset-title-badge').innerText = `Dataset Excel: ${file.name}`;
+                            renderDatasetTable();
+                            updateAltmetricFromDataset();
+                            showToast(`¡Se cargaron ${parsed.length} artículos desde Excel!`);
+                            if (!document.getElementById('section-network').classList.contains('hidden')) {
+                                initNetworkGraph();
+                            }
+                        } else {
+                            showToast('No se pudieron extraer filas válidas del Excel', 'error');
+                        }
+                    } catch (err) {
+                        console.error(err);
+                        showToast('Error al procesar el archivo Excel', 'error');
+                    }
+                };
+                reader.readAsArrayBuffer(file);
+            } else {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const text = e.target.result;
+                    const lines = text.split('\n').filter(l => l.trim().length > 0);
+                    if (lines.length < 2) {
+                        showToast('El CSV debe incluir una cabecera y filas de datos', 'error');
+                        return;
+                    }
+
+                    const parsed = [];
+                    for (let i = 1; i < lines.length; i++) {
+                        const cols = lines[i].split(',').map(c => c.replace(/^"|"$/g, '').trim());
+                        if (cols.length >= 3) {
+                            parsed.push({
+                                title: cols[0] || 'Sin título',
+                                authors: cols[1] || 'Desconocido',
+                                year: parseInt(cols[2]) || 2023,
+                                journal: cols[3] || 'Revista General',
+                                citations: parseInt(cols[4]) || 0,
+                                keywords: cols[5] || 'General'
+                            });
+                        }
+                    }
+
+                    if (parsed.length > 0) {
+                        currentDataset = parsed;
+                        document.getElementById('dataset-title-badge').innerText = `Dataset CSV: ${file.name}`;
+                        renderDatasetTable();
+                        updateAltmetricFromDataset();
+                        showToast(`¡Se cargaron ${parsed.length} filas desde CSV!`);
+                        if (!document.getElementById('section-network').classList.contains('hidden')) {
+                            initNetworkGraph();
+                        }
+                    } else {
+                        showToast('No se pudo procesar el CSV', 'error');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        /* ----------------------------------------------------
+           7. ANALÍTICA DE CAMPO Y GRÁFICOS CHART.JS
+           ---------------------------------------------------- */
+        let pubVelocityChartInstance = null;
+        let journalDistChartInstance = null;
+
+        function updateAnalyticsStats() {
+            if (!currentDataset || currentDataset.length === 0) return;
+
+            const totalPubs = currentDataset.length;
+            const totalCites = currentDataset.reduce((a, b) => a + (b.citations || 0), 0);
+            const avgCites = (totalCites / totalPubs).toFixed(1);
+
+            // Autores
+            const authorCounts = {};
+            currentDataset.forEach(item => {
+                const authors = item.authors.split(';').map(a => a.trim());
+                authors.forEach(a => {
+                    authorCounts[a] = (authorCounts[a] || 0) + 1;
+                });
+            });
+            let topAuthor = '-', maxAuthPubs = 0;
+            Object.keys(authorCounts).forEach(a => {
+                if (authorCounts[a] > maxAuthPubs) {
+                    maxAuthPubs = authorCounts[a];
+                    topAuthor = a;
+                }
+            });
+
+            // Revistas
+            const journalCounts = {};
+            currentDataset.forEach(item => {
+                journalCounts[item.journal] = (journalCounts[item.journal] || 0) + 1;
+            });
+            let topJournal = '-', maxJourPubs = 0;
+            Object.keys(journalCounts).forEach(j => {
+                if (journalCounts[j] > maxJourPubs) {
+                    maxJourPubs = journalCounts[j];
+                    topJournal = j;
+                }
+            });
+
+            document.getElementById('stat-total-pubs').innerText = totalPubs;
+            document.getElementById('stat-avg-cites').innerText = avgCites;
+            document.getElementById('stat-top-author').innerText = topAuthor;
+            document.getElementById('stat-top-author-pubs').innerText = `${maxAuthPubs} publicaciones`;
+            document.getElementById('stat-top-journal').innerText = topJournal;
+            document.getElementById('stat-top-journal-pubs').innerText = `${maxJourPubs} publicaciones`;
+        }
+
+        function renderAnalyticsCharts() {
+            if (!currentDataset || currentDataset.length === 0) return;
+
+            // 1. Velocidad por año
+            const yearMap = {};
+            currentDataset.forEach(d => {
+                const y = d.year || 2023;
+                if (!yearMap[y]) yearMap[y] = { pubs: 0, cites: 0 };
+                yearMap[y].pubs += 1;
+                yearMap[y].cites += (d.citations || 0);
+            });
+            const sortedYears = Object.keys(yearMap).sort((a,b) => a - b);
+            const pubData = sortedYears.map(y => yearMap[y].pubs);
+            const citeData = sortedYears.map(y => yearMap[y].cites);
+
+            const ctx1 = document.getElementById('pubVelocityChart')?.getContext('2d');
+            if (ctx1) {
+                if (pubVelocityChartInstance) pubVelocityChartInstance.destroy();
+                pubVelocityChartInstance = new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: sortedYears,
+                        datasets: [
+                            {
+                                label: 'Publicaciones',
+                                data: pubData,
+                                backgroundColor: '#0284c7',
+                                borderRadius: 4
+                            },
+                            {
+                                label: 'Citas Totales',
+                                data: citeData,
+                                backgroundColor: '#818cf8',
+                                borderRadius: 4
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'top' } }
+                    }
+                });
+            }
+
+            // 2. Revistas Bradford
+            const journalCounts = {};
+            currentDataset.forEach(item => {
+                journalCounts[item.journal] = (journalCounts[item.journal] || 0) + 1;
+            });
+            const sortedJournals = Object.keys(journalCounts).sort((a,b) => journalCounts[b] - journalCounts[a]).slice(0, 5);
+            const journalData = sortedJournals.map(j => journalCounts[j]);
+
+            const ctx2 = document.getElementById('journalDistChart')?.getContext('2d');
+            if (ctx2) {
+                if (journalDistChartInstance) journalDistChartInstance.destroy();
+                journalDistChartInstance = new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: {
+                        labels: sortedJournals,
+                        datasets: [{
+                            data: journalData,
+                            backgroundColor: ['#0284c7', '#6366f1', '#10b981', '#f59e0b', '#ec4899']
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom' } }
+                    }
+                });
+            }
+        }
+
+        /* ----------------------------------------------------
+           8. MAPA DE CO-OCURRENCIA DE NODOS (CANVAS)
+           ---------------------------------------------------- */
+        let networkNodes = [];
+        let networkLinks = [];
+        let networkAnimationId = null;
+        let draggedNode = null;
+
+        function initNetworkGraph() {
+            const canvas = document.getElementById('networkCanvas');
+            if (!canvas) return;
+
+            // Extraer palabras clave si hay dataset
+            const kwMap = {};
+            currentDataset.forEach(item => {
+                if (item.keywords) {
+                    const words = item.keywords.split(',').map(w => w.trim());
+                    words.forEach(w => {
+                        if (w) kwMap[w] = (kwMap[w] || 0) + 1;
+                    });
+                }
+            });
+
+            const topKws = Object.keys(kwMap).sort((a,b) => kwMap[b] - kwMap[a]).slice(0, 10);
+            const colors = ['#0284c7', '#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6'];
+
+            networkNodes = topKws.map((name, i) => ({
+                id: name,
+                name: name,
+                radius: Math.min(30, Math.max(14, kwMap[name] * 4 + 10)),
+                color: colors[i % colors.length],
+                textColor: '#ffffff',
+                x: (Math.random() * 0.6 + 0.2) * canvas.offsetWidth,
+                y: (Math.random() * 0.6 + 0.2) * canvas.offsetHeight,
+                vx: 0,
+                vy: 0
+            }));
+
+            // Crear enlaces aleatorios entre palabras clave consecutivas o compartidas
+            networkLinks = [];
+            for (let i = 0; i < networkNodes.length - 1; i++) {
+                networkLinks.push({
+                    source: networkNodes[i].id,
+                    target: networkNodes[i + 1].id,
+                    weight: Math.floor(Math.random() * 4) + 2
+                });
+                if (i + 2 < networkNodes.length && Math.random() > 0.5) {
+                    networkLinks.push({
+                        source: networkNodes[i].id,
+                        target: networkNodes[i + 2].id,
+                        weight: Math.floor(Math.random() * 3) + 1
+                    });
+                }
+            }
+
+            updateNetworkSelects();
+            renderNodesChipList();
+
+            // Eventos de arrastre
+            canvas.onmousedown = onCanvasMouseDown;
+            canvas.onmousemove = onCanvasMouseMove;
+            canvas.onmouseup = onCanvasMouseUp;
+
+            startNetworkSimulation();
+        }
+
+        function updateNetworkSelects() {
+            const srcSel = document.getElementById('link-source-select');
+            const tgtSel = document.getElementById('link-target-select');
+            if (!srcSel || !tgtSel) return;
+
+            srcSel.innerHTML = '';
+            tgtSel.innerHTML = '';
+
+            networkNodes.forEach(n => {
+                srcSel.innerHTML += `<option value="${n.id}">${n.name}</option>`;
+                tgtSel.innerHTML += `<option value="${n.id}">${n.name}</option>`;
+            });
+        }
+
+        function renderNodesChipList() {
+            const container = document.getElementById('nodes-chip-list');
+            const lbl = document.getElementById('nodes-count-lbl');
+            if (!container) return;
+
+            lbl.innerText = `${networkNodes.length} nodos`;
+            container.innerHTML = '';
+
+            networkNodes.forEach(n => {
+                const chip = document.createElement('span');
+                chip.className = 'inline-flex items-center space-x-1 px-2 py-0.5 rounded-full text-[11px] font-medium text-white shadow-sm cursor-pointer';
+                chip.style.backgroundColor = n.color;
+                chip.innerHTML = `<span>${n.name}</span><button onclick="removeNode('${n.id}')" class="ml-1 hover:text-rose-200">&times;</button>`;
+                container.appendChild(chip);
+            });
+        }
+
+        function addOrUpdateNode() {
+            const name = document.getElementById('node-name-input').value.trim();
+            const size = parseInt(document.getElementById('node-size-input').value) || 16;
+            const color = document.getElementById('node-color-input').value;
+            const textColor = document.getElementById('node-textcolor-input').value;
+
+            if (!name) {
+                showToast('Ingresa un nombre para el nodo', 'error');
+                return;
+            }
+
+            const canvas = document.getElementById('networkCanvas');
+            let existing = networkNodes.find(n => n.id.toLowerCase() === name.toLowerCase());
+
+            if (existing) {
+                existing.radius = size;
+                existing.color = color;
+                existing.textColor = textColor;
+                showToast(`Nodo "${name}" actualizado`);
+            } else {
+                networkNodes.push({
+                    id: name,
+                    name: name,
+                    radius: size,
+                    color: color,
+                    textColor: textColor,
+                    x: (Math.random() * 0.6 + 0.2) * (canvas?.offsetWidth || 500),
+                    y: (Math.random() * 0.6 + 0.2) * (canvas?.offsetHeight || 400),
+                    vx: 0,
+                    vy: 0
+                });
+                showToast(`Nodo "${name}" agregado`);
+            }
+
+            document.getElementById('node-name-input').value = '';
+            updateNetworkSelects();
+            renderNodesChipList();
+        }
+
+        function removeNode(id) {
+            networkNodes = networkNodes.filter(n => n.id !== id);
+            networkLinks = networkLinks.filter(l => l.source !== id && l.target !== id);
+            updateNetworkSelects();
+            renderNodesChipList();
+            showToast('Nodo eliminado');
+        }
+
+        function addOrUpdateLink() {
+            const src = document.getElementById('link-source-select').value;
+            const tgt = document.getElementById('link-target-select').value;
+            const w = parseInt(document.getElementById('link-weight-input').value) || 2;
+
+            if (src === tgt) {
+                showToast('Selecciona dos nodos distintos', 'error');
+                return;
+            }
+
+            let existing = networkLinks.find(l => (l.source === src && l.target === tgt) || (l.source === tgt && l.target === src));
+            if (existing) {
+                existing.weight = w;
+                showToast('Enlace actualizado');
+            } else {
+                networkLinks.push({ source: src, target: tgt, weight: w });
+                showToast('Nuevo enlace creado');
+            }
+        }
+
+        function removeLink() {
+            const src = document.getElementById('link-source-select').value;
+            const tgt = document.getElementById('link-target-select').value;
+            networkLinks = networkLinks.filter(l => !((l.source === src && l.target === tgt) || (l.source === tgt && l.target === src)));
+            showToast('Enlace eliminado');
+        }
+
+        function resetNetworkLayout() {
+            initNetworkGraph();
+            showToast('Red reorganizada');
+        }
+
+        function startNetworkSimulation() {
+            const canvas = document.getElementById('networkCanvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+
+            function step() {
+                // Ajustar tamaño de canvas
+                if (canvas.width !== canvas.offsetWidth || canvas.height !== canvas.offsetHeight) {
+                    canvas.width = canvas.offsetWidth;
+                    canvas.height = canvas.offsetHeight;
+                }
+
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                // Aplicar fuerzas simples
+                const k = 0.05;
+                networkLinks.forEach(link => {
+                    const s = networkNodes.find(n => n.id === link.source);
+                    const t = networkNodes.find(n => n.id === link.target);
+                    if (s && t) {
+                        const dx = t.x - s.x;
+                        const dy = t.y - s.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                        const force = (dist - 100) * k;
+                        const fx = (dx / dist) * force;
+                        const fy = (dy / dist) * force;
+
+                        if (s !== draggedNode) { s.vx += fx; s.vy += fy; }
+                        if (t !== draggedNode) { t.vx -= fx; t.vy -= fy; }
+                    }
+                });
+
+                // Repulsión entre nodos
+                for (let i = 0; i < networkNodes.length; i++) {
+                    for (let j = i + 1; j < networkNodes.length; j++) {
+                        const n1 = networkNodes[i];
+                        const n2 = networkNodes[j];
+                        const dx = n2.x - n1.x;
+                        const dy = n2.y - n1.y;
+                        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                        if (dist < 150) {
+                            const force = -200 / (dist * dist);
+                            const fx = (dx / dist) * force;
+                            const fy = (dy / dist) * force;
+                            if (n1 !== draggedNode) { n1.vx += fx; n1.vy += fy; }
+                            if (n2 !== draggedNode) { n2.vx -= fx; n2.vy -= fy; }
+                        }
+                    }
+                }
+
+                // Actualizar posiciones y dibujar
+                networkNodes.forEach(n => {
+                    if (n !== draggedNode) {
+                        n.vx *= 0.85;
+                        n.vy *= 0.85;
+                        n.x += n.vx;
+                        n.y += n.vy;
+
+                        // Límites del canvas
+                        n.x = Math.max(n.radius, Math.min(canvas.width - n.radius, n.x));
+                        n.y = Math.max(n.radius, Math.min(canvas.height - n.radius, n.y));
+                    }
+                });
+
+                // Dibujar enlaces
+                networkLinks.forEach(link => {
+                    const s = networkNodes.find(n => n.id === link.source);
+                    const t = networkNodes.find(n => n.id === link.target);
+                    if (s && t) {
+                        ctx.beginPath();
+                        ctx.moveTo(s.x, s.y);
+                        ctx.lineTo(t.x, t.y);
+                        ctx.strokeStyle = '#334155';
+                        ctx.lineWidth = link.weight || 2;
+                        ctx.stroke();
+                    }
+                });
+
+                // Dibujar nodos
+                networkNodes.forEach(n => {
+                    ctx.beginPath();
+                    ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = n.color;
+                    ctx.fill();
+                    ctx.strokeStyle = '#ffffff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+
+                    ctx.fillStyle = n.textColor || '#ffffff';
+                    ctx.font = '11px Inter';
+                    ctx.textAlign = 'center';
+                    ctx.textBaseline = 'middle';
+                    ctx.fillText(n.name, n.x, n.y);
+                });
+
+                networkAnimationId = requestAnimationFrame(step);
+            }
+
+            if (networkAnimationId) cancelAnimationFrame(networkAnimationId);
+            step();
+        }
+
+        function onCanvasMouseDown(e) {
+            const canvas = document.getElementById('networkCanvas');
+            const rect = canvas.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            draggedNode = networkNodes.find(n => {
+                const dx = n.x - mouseX;
+                const dy = n.y - mouseY;
+                return Math.sqrt(dx * dx + dy * dy) <= n.radius;
+            });
+        }
+
+        function onCanvasMouseMove(e) {
+            if (!draggedNode) return;
+            const canvas = document.getElementById('networkCanvas');
+            const rect = canvas.getBoundingClientRect();
+            draggedNode.x = e.clientX - rect.left;
+            draggedNode.y = e.clientY - rect.top;
+        }
+
+        function onCanvasMouseUp() {
+            draggedNode = null;
+        }
+
+        /* ----------------------------------------------------
+           9. ASESOR ESTRATÉGICO IA (GEMINI 3 FLASH)
+           ---------------------------------------------------- */
+        async function generateScientometricStrategy() {
+            const field = document.getElementById('advisor-field').value.trim();
+            const abstract = document.getElementById('advisor-abstract').value.trim();
+            const stage = document.getElementById('advisor-stage').value;
+
+            if (!field) {
+                showToast('Por favor escribe un campo o dominio de investigación', 'error');
+                return;
+            }
+
+            document.getElementById('advisor-empty').classList.add('hidden');
+            document.getElementById('advisor-result').classList.add('hidden');
+            document.getElementById('advisor-loading').classList.remove('hidden');
+
+            const prompt = `Actúa como un Asesor Cientométrico Principal y Mentor de Tesis Doctoral. Genera un plan de publicación estratégico detallado en español para un estudiante de doctorado con la siguiente información:
+            
+- **Campo de Investigación:** ${field}
+- **Etapa Doctoral:** ${stage}
+- **Resumen/Propuesta:** ${abstract || 'No especificado'}
+
+Estructura la respuesta usando formato Markdown claro con encabezados:
+1. **Matriz de Revistas Objetivo (Bradford Zone 1 & 2)**: Recomienda 3 tipos de revistas (Revista Top Q1, Revista Interdisciplinaria Q1/Q2, y Revista de Respuesta Rápida/Open Access).
+2. **Estrategia de Citas y Descubribilidad**: Sugiere palabras clave de alto impacto y cómo optimizar el título/resumen para SEO académico.
+3. **Redes de Co-autoría e Impacto**: Autores líderes a seguir o citar y consejos estratégicos para acelerar el impacto en esta etapa doctoral.`;
+
+            try {
+                const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{ parts: [{ text: prompt }] }]
+                    })
+                });
+
+                const data = await response.json();
+                const outputText = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+
+                document.getElementById('advisor-loading').classList.add('hidden');
+
+                if (outputText) {
+                    const htmlContent = outputText
+                        .replace(/^### (.*$)/gim, '<h4 class="font-bold text-slate-800 text-base mt-4 mb-2">$1</h4>')
+                        .replace(/^## (.*$)/gim, '<h3 class="font-bold text-sky-700 text-lg mt-5 mb-2 border-b border-slate-200 pb-1">$1</h3>')
+                        .replace(/^\* (.*$)/gim, '<li class="ml-4 list-disc text-slate-600 mb-1">$1</li>')
+                        .replace(/\*\*(.*?)\*\*/g, '<strong class="font-semibold text-slate-900">$1</strong>');
+
+                    document.getElementById('advisor-output-text').innerHTML = htmlContent;
+                    document.getElementById('advisor-result').classList.remove('hidden');
+                    showToast('Estrategia generada con éxito');
+                } else {
+                    showToast('No se recibió respuesta válida del modelo', 'error');
+                    document.getElementById('advisor-empty').classList.remove('hidden');
+                }
+            } catch (err) {
+                console.error(err);
+                document.getElementById('advisor-loading').classList.add('hidden');
+                document.getElementById('advisor-empty').classList.remove('hidden');
+                showToast('Error al conectar con la API de Gemini', 'error');
+            }
+        }
+
+        function copyAdvisorReport() {
+            const text = document.getElementById('advisor-output-text').innerText;
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+            showToast('Informe copiado al portapapeles');
+        }
+
+        /* ----------------------------------------------------
+           10. INICIALIZACIÓN GENERAL EN WINDOW.ONLOAD
+           ---------------------------------------------------- */
+        window.onload = function() {
+            loadPresetDataset('ai_healthcare');
+            setTimeout(function() {
+                initAltmetricRadar();
+            }, 100);
+            calculateHIndex();
+            setCouplingSim('coupling');
+        };
+    </script>
+</body>
+</html>
